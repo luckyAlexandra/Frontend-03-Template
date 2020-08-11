@@ -42,7 +42,6 @@ class Request {
                 })
             } 
             connection.on('data', data => {
-                console.log('data--->', data.toString())
                 parser.receive(data.toString())
                 if (parser.isFinished) {
                     resolve(parser.response)
@@ -76,6 +75,7 @@ class Request {
 // 最重要的第四步，response解析
 class ResponseParser {
     constructor () {
+        // todo 优化，将状态机常量写法改成函数写法
         // 开始要等一个statusLine状态，statusLine会以一个\r\n去做结束，\r和\n是两个状态。
         // WAITING_STATUS_LINE这个状态，当它接收到一个\r的时候，并不会立刻切到WAITING_HEADER的状态，它会再等一个line end的符号\n，所以会产生两个状态。 
         this.WAITING_STATUS_LINE = 0
@@ -98,6 +98,8 @@ class ResponseParser {
         this.headers = {}
         this.headerName = ''
         this.headerValue = ''
+        // bodyParser和head相关，我们没办法在一开始创建responseParser的时候，就直接创建好bodyParser，
+        // 而是在head结束的时候，也就是找到WAITING_HEADER_BLOCK_END的时候
         this.bodyParser = null
     }
     get isFinished () {
@@ -113,26 +115,23 @@ class ResponseParser {
         }
     }
     receive (string) {
-        console.log('string--->', string)
         for (let i = 0; i < string.length; i++) {
             this.receiveChar(string.charAt(i))
-            console.log('i---->', string.charAt(i))
         }
     }
     receiveChar (char) {
         if (this.current === this.WAITING_STATUS_LINE) {
-            if (char === '\r') {
-                console.log('char', char)
+            if (char === '\r') {// 等字符\r
                 this.current = this.WAITING_STATUS_LINE_END
             } else { 
                 this.statusLine += char 
             }
-        } else if (this.current === this.WAITING_HEADER_LINE_END) {
-            if (char === '\n') {
-                this.current === this.WAITING_HEADER_NAME
+        } else if (this.current === this.WAITING_STATUS_LINE_END) {
+            if (char === '\n') { // 等字符\n
+                this.current = this.WAITING_HEADER_NAME
             }
         } else if (this.current === this.WAITING_HEADER_NAME) {
-            if (char === ':') {
+            if (char === ':') { //  等字符:
                 this.current = this.WAITING_HEADER_SPACE
             } else if (char === '\r') {
                 // 如果没等到冒号，只等到\r，说明这行是空行，进入WAITING_HEADER_BLOCK_END状态
@@ -145,13 +144,14 @@ class ResponseParser {
             } else {
                 this.headerName += char
             }
-        } else if (this.current === this.WAITING_HEADER_SPACE) {
-            if (char === ' ') {
+        } else if (this.current === this.WAITING_HEADER_SPACE) { // 临时状态
+            if (char === ' ') { // 等冒号后边的空格
                 this.current = this.WAITING_HEADER_VALUE
             }
         } else if (this.current === this.WAITING_HEADER_VALUE) {
             if (char === '\r') {
                 this.current = this.WAITING_HEADER_LINE_END
+                // 等到\r以后把暂存的headerName和headerValue写到headers上面
                 this.headers[this.headerName] = this.headerValue
                 this.headerName = ''
                 this.headerValue = ''
@@ -160,10 +160,13 @@ class ResponseParser {
             }
         } else if (this.current === this.WAITING_HEADER_LINE_END) {
             if (char === '\n') {
+                this.current = this.WAITING_HEADER_NAME
+            }
+        } else if (this.current === this.WAITING_HEADER_BLOCK_END) {
+            if (char === '\n') {
                 this.current = this.WAITING_BODY
             }
         } else if (this.current === this.WAITING_BODY) {
-            console.log(char)
             // 当找到WAITING_BODY时，就一股脑地把char全都塞给bodyParser去处理
             this.bodyParser.receiveChar(char)
         }
@@ -191,27 +194,33 @@ void async function () {
     console.log(response)
 }()
 
-// 所谓chunked body，它的结构是一个长度后面跟着一个chunk的内容，被称为一个chunk，遇到一个长度位0的chunk，那么整个body就结束了。
+// TrunkedBodyParser和responseBodyParser非常相似，所谓chunked body，它的结构是一个长度后面跟着一个chunk的内容，被称为一个chunk，遇到一个长度位0的chunk，那么整个body就结束了。
 class TrunkedBodyParser {
     constructor () {
+        // 处理长度
         this.WAITING_LENGTH = 0
         this.WAITING_LENGTH_LINE_END = 1
+
+        // 非常规操作，READING_TRUNK，要想退出READING_TRUNK的状态，我们必须要等待这个长度，必须要计算chunk里的长度，所以严格来说这已经不是一个米粒状态机了，但仍然是一个可以跑起来的状态机
+        // reading trunk没有办法用一个输入来标志它的结束，因为trunk里可以含有任何的字符，所以我们只能用一个预先读进来的长度来控制这个chunk的大小。
         this.READING_TRUNK = 2
+
         this.WAITING_NEW_LINE = 3
         this.WAITING_NEW_LINE_END = 4
+
         this.length = 0
         this.content = []
         this.isFinished = false
         this.current = this.WAITING_LENGTH
     }
-    receiveChar () {
+    receiveChar (char) {
         if (this.current === this.WAITING_LENGTH) {
             if (char === '\r') {
-                if (this.length === 0) {
+                if (this.length === 0) {// 遇到了长度位0的chunk，isFinished置为true，来告诉上级的parser已经结束了
                     this.isFinished = true
                 }
                 this.current = this.WAITING_LENGTH_LINE_END
-            } else {
+            } else {// length是十六进制，给原来的值乘以16，把最后的位空出来，再把最后读进来的这位加上去
                 this.length *= 16
                 this.length += parseInt(char, 16)
             }

@@ -35,3 +35,9 @@ URL -> HTTP -> HTML -> parse -> Dom -> css computing -> DOM with css -> layout -
 
 - Response必须分段构造，所以我们要用一个responseParser来装配
 - ResponseParser分段处理ResponseText，我们用状态机来分析文本的结构
+
+
+## 第五步 bodyParser总结
+
+- Response的body可能根据Content-Type有不同的结构，因此我们会采用**子Parser**的结构来解决问题
+- 以TrunkedBodyParser为例，我们同样用状态机来处理body的格式（不是所有的BodyParser都是TrunkedBodyParser，实际上BodyParser数量还是蛮多的）
