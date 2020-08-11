@@ -12,3 +12,26 @@ URL -> HTTP -> HTML -> parse -> Dom -> css computing -> DOM with css -> layout -
 - 每一个机器都知道下一个状态
     - 每个机器都有确定的下一个状态（Moore）
     - 每个机器根据输入决定下一个状态（Mealy）
+    
+## 第一步 HTTP请求总结
+
+- 设计一个http请求的类
+- contentType是一个必要的字段，要有默认值
+- body是KV格式
+- 不同的contentType影响body的格式
+
+## 第二步 send函数总结
+- 在Request构造器中收集必要的信息
+- 设计一个send函数，把请求真实发送到服务器
+- send函数应该是异步的，所以返回promise
+
+## 第三步 发送请求
+
+- 设计支持已有的connection或者自己新建connection
+- 收到数据传给parser
+- 根据parser的状态去resolve promise
+
+## 第四步 responseParser总结
+
+- Response必须分段构造，所以我们要用一个responseParser来装配
+- ResponseParser分段处理ResponseText，我们用状态机来分析文本的结构
