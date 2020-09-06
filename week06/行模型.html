@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div style="font-size: 50px;line-height: 100px;background-color: pink;">
+        <div style="vertical-align: middle;overflow: visiable;display: inline-block;width: 1px;height: 1px;">
+            <div style="width: 1000px;height: 1px;background-color: red;"></div>
+        </div>
+        <span>Hello good 中文</span>
+        <div style="vertical-align: text-top;line-height: 70px;width: 100px;height: 150px;background-color: aqua;display: inline-block;">
+            b<br>c
+        </div>
+        <!-- <div style="vertical-align: text-bottom;line-height: 70px;width: 100px;height: 150px;background-color: aqua;display: inline-block;">
+            b<br>c
+        </div> -->
+    </div>
+</body>
+</html>
+<!-- 默认用盒的下边缘跟文字的基线对齐。但是一旦盒里加了文字，基线的位置就变了，变成了盒里最后一行文字的基线。
+    所以行内盒inline-block的基线，是随着自己里面的文字去变化的。
+    所以大部分情况下是不建议给行内盒使用基线对齐的。我们可以使用vertical-align，top是跟顶缘对齐，bottom是跟底缘对齐，middle在中心线跟文字对齐 -->
