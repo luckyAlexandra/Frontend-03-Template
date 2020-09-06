@@ -158,4 +158,5 @@ css所谓的控制表现，无非是有3类，第一类就是控制元素的位�
 - transition-timing-function 时间曲线; 
 - transition-delay 延迟。
 
-timing-function其实来自于一个三次贝塞尔曲线，所有的timing-function，都和三次贝塞尔曲线相关，https://cubic-bezier.com。贝塞尔曲线横轴表示的时间，纵轴表示的是进展。回弹可以超过对应的范围，它可以弹过终点再弹回来。有几个关键的三次贝塞尔曲线，就是我们内置的贝塞尔曲线，其中有ease，标准的缓动曲线，是一种最自然的曲线形态。linear是直线，它相当于退化为一个一次曲线，这个时候是没有必要去使用的。ease-in和ease-out分别表示一个缓动启动，一个缓动停止，ease-in往往用于退出动画，ease-out往往用于元素出现。
+timing-function其实来自于一个三次贝塞尔曲线，所有的timing-function，都和三次贝塞尔曲线相关，https://cubic-bezier.com。
+贝塞尔曲线横轴表示的时间，纵轴表示的是进展。回弹可以超过对应的范围，它可以弹过终点再弹回来。有几个关键的三次贝塞尔曲线，就是我们内置的贝塞尔曲线，其中有ease，标准的缓动曲线，是一种最自然的曲线形态。linear是直线，它相当于退化为一个一次曲线，这个时候是没有必要去使用的。ease-in和ease-out分别表示一个缓动启动，一个缓动停止，ease-in往往用于退出动画，ease-out往往用于元素出现。
