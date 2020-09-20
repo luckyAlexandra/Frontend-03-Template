@@ -1,0 +1,488 @@
+<script>
+  let names = Object.getOwnPropertyNames(window);
+
+  function filterOut(names, props) {
+    let set = new Set();
+    props.forEach((o) => set.add(o));
+    return names.filter((e) => !set.has(e));
+  }
+
+  // ECMA 262
+  function ecma262() {
+    let js = new Set();
+    let objects = [
+      "globalThis",
+      "Infinity",
+      "NaN",
+      "undefined",
+      "console",
+      "eval",
+      "isFinite",
+      "isNaN",
+      "parseFloat",
+      "parseInt",
+      "decodeURI",
+      "decodeURIComponent",
+      "encodeURI",
+      "encodeURIComponent",
+      "Array",
+      "Date",
+      "RegExp",
+      "Promise",
+      "Proxy",
+      "Map",
+      "WeakMap",
+      "Set",
+      "WeakSet",
+      "Function",
+      "Boolean",
+      "String",
+      "Number",
+      "Symbol",
+      "Object",
+      "Error",
+      "EvalError",
+      "RangeError",
+      "ReferenceError",
+      "SyntaxError",
+      "TypeError",
+      "URIError",
+      "ArrayBuffer",
+      "SharedArrayBuffer",
+      "DataView",
+      "Float32Array",
+      "Float64Array",
+      "Int8Array",
+      "Int16Array",
+      "Int32Array",
+      "Uint8Array",
+      "Uint16Array",
+      "Uint32Array",
+      "Uint8ClampedArray",
+      "BigInt",
+      "BigInt64Array",
+      "BigUint64Array",
+      "Atomics",
+      "JSON",
+      "Math",
+      "Reflect",
+      "AggregateError",
+      "FinalizationRegistry",
+      "WeakRef",
+      "escape",
+      "unescape",
+    ];
+    objects.forEach((o) => js.add(o));
+    names = filterOut(names, objects);
+  }
+
+  // 1. Subclass of Node, node的子节点
+  function subclassNode() {
+    names = names
+      .filter((e) => {
+        try {
+          return !(window[e].prototype instanceof Node);
+        } catch (err) {
+          return true;
+        }
+      })
+      .filter((e) => e != "Node");
+  }
+
+  // 2. events
+  function events() {
+    names = names.filter((e) => !e.match(/^on/));
+  }
+
+  // 3. webkit private
+  function webkit() {
+    names = names.filter((e) => !e.match(/^webkit/));
+  }
+
+  // 4. https://html.spec.whatwg.org/#window
+  function whatwgWindow() {
+    // let names = Object.getOwnPropertyNames(window);
+    let js = new Set();
+    let objects = [
+      "Window",
+      "history",
+      "location",
+      "WebSocket",
+      "CloseEvent",
+      "Storage",
+      "sessionStorage",
+      "localStorage",
+      "StorageEvent",
+      "PluginArray",
+      "MimeType",
+      "MimeTypeArray",
+      "EventSource",
+      "Worker",
+      "ImageBitmapRenderingContext",
+      "CanvasRenderingContext2D",
+      "ValidityState",
+      "TimeRanges",
+      "TextTrackList",
+      "TextTrackCueList",
+      "TextTrackCue",
+      "TextTrack",
+      "TextMetrics",
+      "TextEvent",
+    ];
+    objects.forEach((o) => js.add(o));
+    names = filterOut(names, objects);
+
+    names = names
+      .filter((e) => {
+        try {
+          return !(window[e].prototype instanceof Node);
+        } catch (err) {
+          return true;
+        }
+      })
+      .filter((e) => e != "Node");
+
+    let windowprops = new Set();
+    objects = [""];
+  }
+
+  // https://html.spec.whatwg.org
+  function whatwg() {
+    names = filterOut(names, [
+      "HTMLAllCollection",
+      "HTMLFormControlsCollection",
+      "HTMLOptionsCollection",
+      "DOMStringList",
+      "TrackEvent",
+      "SubmitEvent",
+      "FormDataEvent",
+      "ImageBitmapRenderingContext",
+      "OffscreenCanvas",
+      "CustomElementRegistry",
+      "ElementInternals",
+      "DataTransfer",
+      "DataTransferItemList",
+      "DataTransferItem",
+      "DragEvent",
+      "History",
+      "Location",
+      "PopStateEvent",
+      "HashChangeEvent",
+      "PageTransitionEvent",
+      "BeforeUnloadEvent",
+      "MessageEvent",
+      "EventSource",
+      "WebSocket",
+      "CloseEvent",
+      "Storage",
+      "sessionStorage",
+      "localStorage",
+      "StorageEvent",
+    ]);
+  }
+
+  // http://www.ecma-international.org/ecma-402/5.0/index.html#Title
+  function intl() {
+    names = names.filter((e) => e != "Intl");
+  }
+
+  function cssom() {
+    names = filterOut(names, [
+      "AnimationEvent",
+      "CaretPosition",
+      "CSS",
+      "CSSConditionRule",
+      "CSSGroupingRule",
+      "CSSKeyframeRule",
+      "CSSKeyframesRule",
+      "CSSMediaRule",
+      "CSSNamespaceRule",
+      "CSSPageRule",
+      "CSSRule",
+      "CSSRuleList",
+      "CSSStyleDeclaration",
+      "CSSStyleRule",
+      "CSSStyleSheet",
+      "CSSSupportsRule",
+      "LinkStyle",
+      "MediaQueryList",
+      "MediaQueryListListener",
+      "Screen",
+      "StyleSheet",
+      "StyleSheetList",
+      "TransitionEvent",
+    ]);
+  }
+
+  function webRTC() {
+    names = filterOut(names, [
+      "RTCPeerConnection",
+      "RTCSessionDescription",
+      "RTCIceCandidate",
+      "RTCPeerConnectionIceEvent",
+      "RTCPeerConnectionIceErrorEvent",
+      "RTCCertificate",
+      "RTCRtpSender",
+      "RTCRtpReceiver",
+      "RTCRtpTransceiver",
+      "RTCDtlsTransport",
+      "RTCIceTransport",
+      "RTCTrackEvent",
+      "RTCSctpTransport",
+      "RTCDataChannel",
+      "RTCDataChannelEvent",
+      "RTCDTMFSender",
+      "RTCDTMFToneChangeEvent",
+      "RTCStatsReport",
+      "RTCErrorEvent",
+      "RTCError",
+    ]);
+  }
+
+  // https://www.w3.org/TR/2018/CR-SVG2-20181004/
+  function svg() {
+    names = names.filter((e) => !e.match(/^SVG/));
+  }
+
+  // https://www.w3.org/TR/2019/WD-performance-timeline-2-20191024/
+  function perfomance() {
+    names = names.filter((e) => !e.match(/^Performance/));
+  }
+
+  // IndexedDB https://www.w3.org/TR/2018/REC-IndexedDB-2-20180130/
+  function indexDB() {
+    names = filterOut(names, [
+      "IDBVersionChangeEvent",
+      "IDBTransaction",
+      "IDBRequest",
+      "IDBOpenDBRequest",
+      "IDBObjectStore",
+      "IDBKeyRange",
+      "IDBIndex",
+      "IDBFactory",
+      "IDBDatabase",
+      "IDBCursorWithValue",
+      "IDBCursor",
+    ]);
+  }
+
+  // http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15
+  function khronos() {
+    names = filterOut(names, [
+      "WebGLVertexArrayObject",
+      "WebGLUniformLocation",
+      "WebGLTransformFeedback",
+      "WebGLTexture",
+      "WebGLSync",
+      "WebGLShaderPrecisionFormat",
+      "WebGLShader",
+      "WebGLSampler",
+      "WebGLRenderingContext",
+      "WebGLRenderbuffer",
+      "WebGLQuery",
+      "WebGLProgram",
+      "WebGLFramebuffer",
+      "WebGLContextEvent",
+      "WebGLBuffer",
+      "WebGLActiveInfo",
+      "WebGL2RenderingContext",
+    ]);
+  }
+
+  // http://www.w3.org/TR/webaudio
+  function webaudio() {
+    names = filterOut(names, [
+      "BaseAudioContext",
+      "AudioContext",
+      "OfflineAudioContext",
+      "AudioBuffer",
+      "AudioNode",
+      "AudioParam",
+      "AudioScheduledSourceNode",
+      "AnalyserNode",
+      "AudioBufferSourceNode",
+      "AudioDestinationNode",
+      "AudioListener",
+      "AudioProcessingEvent",
+      "BiquadFilterNode",
+      "ChannelMergerNode",
+      "ChannelSplitterNode",
+      "ConstantSourceNode",
+      "ConvolverNode",
+      "DelayNode",
+      "DynamicsCompressorNode",
+      "GainOptions",
+      "IIRFilterNode",
+      "MediaElementAudioSourceNode",
+      "MediaStreamAudioDestinationNode",
+      "MediaStreamAudioSourceNode",
+      "OscillatorNode",
+      "PannerNode",
+      "PeriodicWave",
+      "ScriptProcessorNode",
+      "StereoPannerNode",
+      "WaveShaperNode",
+      "AudioWorklet",
+    ]);
+  }
+
+  function media() {
+    names = filterOut(names, [
+      "MediaCapabilities",
+      "MediaSession",
+      "MediaStream",
+      "MediaStreamTrack",
+      "MediaStreamEvent",
+      "MediaStreamTrackEvent",
+      "MediaDevices",
+      "MediaDeviceInfo",
+      "MediaSettingsRange",
+      "MediaRecorder",
+      "MediaEncryptedEvent",
+    ]);
+    // https://www.w3.org/TR/2016/REC-media-source-20161117/
+    names = filterOut(names, [
+      "MediaSource",
+      "SourceBuffer",
+      "SourceBufferList",
+    ]);
+  }
+
+  function screenOrientation() {
+    names = filterOut(names, ["ScreenOrientation"]);
+  }
+  // https://encoding.spec.whatwg.org/#dom-textencoder
+  function domTextencoder() {
+    names = filterOut(names, [
+      "TextDecoder",
+      "TextEncoder",
+      "TextDecoderStream",
+      "TextEncoderStream",
+    ]);
+  }
+
+  // https://wicg.github.io/BackgroundSync/spec/#sync-manager-interface
+  function syncManager() {
+    names = filterOut(names, ["SyncManager"]);
+  }
+
+  function geolocation() {
+    names = filterOut(names, [
+      "Geolocation",
+      "GeolocationCoordinates",
+      "GeolocationPosition",
+      "GeolocationPositionError",
+    ]);
+  }
+
+  function gamepad() {
+    names = filterOut(names, [
+      "Gamepad",
+      "GamepadButton",
+      "GamepadEvent",
+      "GamepadHapticActuator",
+    ]);
+  }
+
+  function crypto() {
+    names = filterOut(names, [
+      "Crypto",
+      "CryptoKey",
+      "CryptoKeyPair",
+      "RandomSource",
+      "SubtleCrypto",
+    ]);
+  }
+
+  function MIDI() {
+    names = filterOut(names, [
+      "MIDIAccess",
+      "MIDIConnectionEvent",
+      "MIDIInput",
+      "MIDIInputMap",
+      "MIDIMessageEvent",
+      "MIDIOutput",
+      "MIDIOutputMap",
+      "MIDIPort",
+    ]);
+  }
+
+  function USB() {
+    names = filterOut(names, [
+      "USB",
+      "USBAlternateInterface",
+      "USBConfiguration",
+      "USBConnectionEvent",
+      "USBDevice",
+      "USBEndpoint",
+      "USBInterface",
+      "USBInTransferResult",
+      "USBIsochronousInTransferPacket",
+      "USBIsochronousInTransferResult",
+      "USBIsochronousOutTransferPacket",
+      "USBIsochronousOutTransferResult",
+      "USBOutTransferResult",
+    ]);
+  }
+
+  function WebXR() {
+    names = filterOut(names, [
+      "XRBoundedReferenceSpace",
+      "XRFrame",
+      "XRInputSource",
+      "XRInputSourceArray",
+      "XRInputSourceEvent",
+      "XRInputSourcesChangeEvent",
+      "XRPose",
+      "XRReferenceSpace",
+      "XRReferenceSpaceEvent",
+      "XRRenderState",
+      "XRRigidTransform",
+      "XRSession",
+      "XRSessionEvent",
+      "XRSpace",
+      "XRSystem",
+      "XRView",
+      "XRViewerPose",
+      "XRViewport",
+      "XRWebGLLayer",
+      "XRHitTestResult",
+      "XRHitTestSource",
+      "XRRay",
+      "XRTransientInputHitTestResult",
+      "XRTransientInputHitTestSource",
+    ]);
+  }
+
+  function init() {
+    // 952
+    ecma262(); // 900
+    subclassNode(); // 739
+    events(); // 635
+    webkit(); // 622
+    whatwgWindow();
+    whatwg();
+    intl();
+    cssom();
+    webRTC();
+    svg();
+    khronos();
+    webaudio();
+    domTextencoder();
+    syncManager();
+    media();
+    indexDB();
+    screenOrientation();
+    perfomance();
+    geolocation();
+    gamepad();
+    crypto();
+    MIDI();
+    USB();
+    WebXR();
+  }
+
+  init();
+
+  console.log(names);
+</script>

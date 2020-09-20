@@ -81,8 +81,68 @@ strong表示这个词在整个文章中的重要性，em表示这个词在这个
 
 1 2 3 4 5 -> 5 4 3 2 1
 
+- DOM的collection是一个living collection
+- 元素的子元素在insert的时候是不需要先把它从原来的位置挪掉的
+- 使用rangeAPI操作更高效
+
+## Range API
+```
+var range = new Range()
+range.setStart(element, 9)
+range.setEnd(element, 4)
+var range = document.getSelection().getRangeAt(0)
+```
+range 有一个起点和终点，只要起点在DOM树里的位置先于终点就可以，它不需要管层级关系，起止点都是由一个element和一个偏移值来决定的。对于element来说，它的偏移值就是children，对于text node来说，它的偏移值就是文字的个数。range并不一定是包含了一个完整的节点，它可以包含半个节点，不需要去顾忌节点和节点之间的边界，所以range选择的范围非常灵活。
+
+range的获得方式，除了手工指定起止点的方法，还有个selection创建方法，现在的selection一般都只支持一个range，所以说永远使用getRangeAt(0)就可以了。
+
+
+- range.setStartBefore
+- range.setEndBefore
+- range.setStartAfter
+- range.setEndAfter
+- range.selectNode
+- range.selectNodeContents
+
+删和加
+- var fragment = range.extractContents()
+- range.insertNode(document.createTextNode('aaaa))
+
+range负责在dom树上选中，并且把它摘下来，fragment可以批量的把它append上去，这两个是非常强大的dom树的微操手术能力。 
+
+
 # 7、浏览器API｜ CSSOM
+
+## document.styleSheets
+
+## Rules
+- document.styleSheets[0].cssRules
+- document.styleSheets[0].insertRule("p {color: pink;}", 0)
+- document.styleSheets[0].removeRule(0)
+
+## Rule
+- CSSStyleRule
+    - selectorText String
+    - style K-V结构
+- CSSCharsetRule
+- CSSImportRule
+- CSSMediaRule
+- CSSFontfaceRule
+- CSSPageRule
+- CSSNamespaceRule
+- CSSKeyframesRule
+- CSSSupportsRule
 
 # 8、浏览器API｜ CSSOM view
 
 # 9、浏览器API｜ 其他API
+## 标准化组织
+- khronos
+    - WebGl
+- ECMA
+    - ECMAScript
+- WHATWG
+    - HTML
+- W3C
+    - webaudio
+    - CG/WG
