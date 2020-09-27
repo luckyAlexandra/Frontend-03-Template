@@ -1,0 +1,113 @@
+<style>
+    #container {
+        width: 701px;
+    }
+    .cell {
+        display: inline-block;
+        line-height: 7px;
+        width: 6px;
+        height: 6px;
+        background-color: gray;
+        border-bottom: 1px solid white;
+        border-right: 1px solid white;
+        vertical-align: top;
+    }
+</style>
+<div id="container"></div>
+<button onclick="localStorage['map']=JSON.stringify(map)">save</button>
+<script>
+    let map = localStorage['map'] ? JSON.parse(localStorage['map']) : Array(10000).fill(0)
+
+    let container = document.getElementById('container')
+
+    for (let y = 0; y < 100; y++) {
+        for (let x = 0; x < 100; x++) {
+            let cell = document.createElement('div')
+            cell.classList.add('cell')
+
+            // 画地图，有墙用1来表示，没墙用0来表示
+            if (map[100 * y + x] == 1) {
+                cell.style.backgroundColor = 'black'
+            }
+
+            // 编辑地图
+            cell.addEventListener('mousemove', () => {
+                if (mousedown) {
+                    if (clear) {
+                        cell.style.backgroundColor = ''
+                        map[100 * y + x] = 0
+                    } else {
+                        cell.style.backgroundColor = 'black' // 视觉上变成墙
+                        map[100 * y + x] = 1 // 逻辑上变成墙
+                    }
+                }
+            })
+
+            container.appendChild(cell)
+        }
+    }
+
+    let mousedown = false
+    let clear = false
+
+    document.addEventListener('mousedown', e => {
+        mousedown = true
+        clear = (e.which === 3) // 鼠标右键
+    })
+
+    document.addEventListener('mouseup', () => {
+        mousedown = false
+    })
+
+    document.addEventListener('contextmenu', e => e.preventDefault()) // 禁止默认弹出菜单
+
+
+    function sleep (t) {
+        return new Promise(function (resolve) {
+            setTimeout(resolve, t)
+        })
+    }
+
+
+    async function path (map, start, end) {
+        var queue = [start]
+
+        // 入队的逻辑
+        async function insert (x, y) {
+            if (x < 0 || x >= 100 || y < 0 || y >= 100) {
+                return
+            }
+            if (map[y * 100 + x]) { // 墙1或者已找过的点2
+                return
+            }
+
+            await sleep(1)
+
+            map[y * 100 + x] = 2 // 修改状态，从0改为2，标记为已找过的点
+            container.children[y * 100 + x].style.backgroundColor = 'lightgreen'
+
+            queue.push([x, y])
+        }
+
+        while (queue.length) {
+            let [x, y] = queue.shift()
+            // console.log(x, y)
+
+            // 找到了最终的点
+            if (x === end[0] && y === end[1]) {
+                container.children[y * 100 + x].style.backgroundColor = 'red'
+                return true
+            }
+
+            await insert(x - 1, y)
+            await insert(x, y - 1)
+            await insert(x + 1, y)
+            await insert(x, y + 1)
+
+        }
+        return false
+    }
+
+    path(map, [0, 0], [50, 50])
+
+</script>
