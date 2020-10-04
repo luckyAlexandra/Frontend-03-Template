@@ -1,0 +1,21 @@
+<script>
+    var regexp = /([0-9\.]+)|([ \t]+)|([\r\n]+)|(\*)|(\/)|(\+)|(\-)/g;
+    var dictionary = ['Number', 'Whitespace', 'LineTerminator', '*', '/', '+', '-'];
+
+    function tokenize (source) {
+        var result = null
+        while (true) {
+            result = regexp.exec(source);
+            if (!result) break;
+            // 0是整个正则匹配到的，1-7是它匹配到了哪一种
+            for (var i = 1; i <= dictionary.length; i++) {
+                if (result[i]) {
+                    console.log(dictionary[i - 1])
+                }
+            }
+            console.log(result)
+        }
+    }
+
+    tokenize("1024 + 10 * 25")
+</script>

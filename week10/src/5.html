@@ -1,0 +1,153 @@
+<script>
+    var regexp = /([0-9\.]+)|([ \t]+)|([\r\n]+)|(\*)|(\/)|(\+)|(\-)/g;
+    var dictionary = ['Number', 'Whitespace', 'LineTerminator', '*', '/', '+', '-'];
+
+    function* tokenize (source) {
+        var result = null
+        var lastIndex = 0
+        while (true) {
+            lastIndex = regexp.lastIndex
+            result = regexp.exec(source);
+            if (!result) 
+                break;
+            if (regexp.lastIndex - lastIndex > result[0].length)
+                break;
+
+            let token = {
+                type: null,
+                value: null
+            }
+            // 0是整个正则匹配到的，1-7是它匹配到了哪一种
+            for (var i = 1; i <= dictionary.length; i++) {
+                if (result[i]) {
+                    // console.log(dictionary[i - 1])
+                    token.type = dictionary[i - 1]
+                }
+            }
+            token.value = result[0]
+            // console.log(result)
+            yield token
+        }
+        yield {
+            type: 'EOF'
+        }
+    }
+
+    let source = []
+
+    for (let token of tokenize("1 + 2 + 3")) {
+        if (token.type !== 'Whitespace'  && token.type !== 'LineTerminator') {
+            source.push(token)
+        }
+    }
+
+    function Expression (tokens) {
+
+    }
+
+    function AddictiveExpression (source) {
+        if (source[0].type === 'MultiplicativeExpression') {
+            let node = {
+                type: 'AddictiveExpression',
+                children: [source[0]]
+            }
+            source[0] = node
+            return AddictiveExpression(source)
+        }
+        
+        if (source[0].type = 'AddictiveExpression' && source[1] && source[1].type === '+') {
+            let node = {
+                type: 'AddictiveExpression',
+                operator: '+',
+                children: []
+            }
+            node.children.push(source.shift())
+            node.children.push(source.shift())
+            //多一个步骤，把source里的非终结符处理掉
+            MultiplicativeExpression(source)
+            node.children.push(source.shift())
+            source.unshift(node)
+            return AddictiveExpression(source)
+
+        }
+
+        if (source[0].type = 'AddictiveExpression' && source[1] && source[1].type === '-') {
+            let node = {
+                type: 'AddictiveExpression',
+                operator: '-',
+                children: []
+            }
+            node.children.push(source.shift())
+            node.children.push(source.shift())
+            //多一个步骤，把source里的非终结符处理掉
+            MultiplicativeExpression(source)
+            node.children.push(source.shift())
+            source.unshift(node)
+            return AddictiveExpression(source)
+        }
+
+
+        // 递归结束的条件：source[0].type是MultiplicativeExpression，但后边又不是乘号或除号
+        if (source[0].type === 'AddictiveExpression') {
+            return source[0]
+        }
+        // 当找到一个不认识的东西时，需要调用一次MultiplicativeExpression，然后在重新调用AddictiveExpression
+        MultiplicativeExpression(source);
+        return AddictiveExpression(source);
+    }
+
+    function MultiplicativeExpression (source) {
+        // 第一个输入可能是Number和MultiplicativeExpression
+        // 第二个输入可能是*或者/
+        if (source[0].type === 'Number') {
+            // 新建一个节点，是一个新的非终结符
+            let node = {
+                type: 'MultiplicativeExpression',
+                children: [source[0]]
+            }
+            source[0] = node
+            return MultiplicativeExpression(source) // 递归调用
+        }
+
+        if (source[0].type === 'MultiplicativeExpression' && source[1] && source[1].type === '*') {
+            let node = {
+                type: 'MultiplicativeExpression',
+                operator: '*',
+                children: []
+            }
+            // 前三项全都shift出来，放进node的children里
+            node.children.push(source.shift())
+            node.children.push(source.shift())
+            node.children.push(source.shift())
+            // 把新生成的结构放回source里
+            source.unshift(node)
+            return MultiplicativeExpression(source) // 递归调用
+        }
+
+        if (source[0].type === 'MultiplicativeExpression' && source[1] && source[1].type === '/') {
+            let node = {
+                type: 'MultiplicativeExpression',
+                operator: '/',
+                children: []
+            }
+            // 前三项全都shift出来，放进node的children里
+            node.children.push(source.shift())
+            node.children.push(source.shift())
+            node.children.push(source.shift())
+            // 把新生成的结构放回source里
+            source.unshift(node)
+            return MultiplicativeExpression(source) // 递归调用
+        }
+
+        // 递归结束的条件：source[0].type是MultiplicativeExpression，但后边又不是乘号或除号
+        if (source[0].type === 'MultiplicativeExpression') {
+            return source[0]
+        }
+
+        // 如果有一些其他的情况，默认给一个递归自己，应该不会有这个情况
+        return MultiplicativeExpression(source)
+    }
+
+    console.log(AddictiveExpression(source))
+
+</script>
