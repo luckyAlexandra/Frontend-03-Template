@@ -1,0 +1,94 @@
+<div id="container">
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+  文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字文字
+</div>
+
+<div
+  id="dragable"
+  style="display: inline-block;width: 100px; height: 100px; background-color: pink"
+></div>
+<script>
+  let dragable = document.getElementById("dragable");
+
+  let baseX = 0,
+    baseY = 0;
+
+  dragable.addEventListener("mousedown", (event) => {
+    // 存鼠标起始点
+    let startX = event.clientX,
+      startY = event.clientY;
+
+    // mouseup和mousemove事件需要在mousedown里面去监听，因为只有鼠标按下去之后，我们去监听这个事件，才能在性能上和逻辑上都正确。
+    // 如果写在mousedown之外，不管什么时候只要鼠标在它上面一移动，这个事件就触发了
+    // 还有mousemove和mouseup都是要在document上去监听的，如果在dragable上监听就容易出现鼠标一下拖的快了，移开了dragable区域，就会出现拖断的现象。
+    let up = (event) => {
+      document.removeEventListener("mouseup", up);
+      document.removeEventListener("mousemove", move);
+      baseX = baseX + event.clientX - startX;
+      baseY = baseY + event.clientY - startY;
+    };
+    let move = (event) => {
+        // 获取离插入点最近的range
+        let range = getNearest(event.clientY, event.clientY)
+        range.insertNode(dragable)
+    //   dragable.style.transform = `translate(${
+    //     baseX + event.clientX - startX
+    //   }px, ${baseY + event.clientY - startY}px)`;
+    };
+    document.addEventListener("mouseup", up);
+    document.addEventListener("mousemove", move);
+  });
+
+  let ranges = [];
+  let container = document.getElementById("container");
+  for (let i = 0; i < container.childNodes[0].textContent.length; i++) {
+    let range = document.createRange();
+    range.setStart(container.childNodes[0], i);
+    range.setEnd(container.childNodes[0], i);
+    // console.log(range.getBoundingClientRect())
+    ranges.push(range);
+  }
+
+  function getNearest(x, y) {
+    let min = Infinity;
+    let nearest = null;
+
+    for (let range of ranges) {
+        let rect = range.getBoundingClientRect()
+        let distance = (rect.x - x) ** 2 + (rect.y - y) ** 2
+        if (distance < min) {
+            nearest = range
+            min = distance
+        }
+    }
+    return nearest
+  }
+
+  document.addEventListener('selectstart', event => event.preventDefault())
+
+</script>
