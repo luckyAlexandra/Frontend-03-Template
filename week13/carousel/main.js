@@ -23,50 +23,30 @@ class Carousel extends Component {
 
         let position = 0
 
-
         this.root.addEventListener('mousedown', event => {
             let children = this.root.children
-
             let startX = event.clientX
 
             let move = event => {
                 let x = event.clientX - startX
-
                 let current = position - ((x - x % 500) / 500)
-
+                
                 for (let offset of [-1, 0, 1]) {
                     let pos = current + offset
-                    // 利用取余运算处理循环的小技巧
-                    pos = (pos + children.length) % children.length
+                    pos = (pos + children.length) % children.length // 利用取余运算处理循环的小技巧
                     children[pos].style.transition = 'none'
                     children[pos].style.transform = `translateX(${- pos * 500 + offset * 500 + x % 500}px)`
                 }
-
-                for (let child of children) {
-                    // 挪动的时候关掉transition
-                    child.style.transition = 'none'
-                    child.style.transform = `translateX(${- position * 500 + x}px)`
-                }
-                // 推荐使用event.clientX 和 clientY, 它表示相对浏览器中间的可渲染区域的坐标。这个坐标胜在不受任何因素的影响。
-                // 比如说整个组件是在一个滚动的容器里，容器滚动之后，会不会坐标就变了，非常有可能，甚至因为一些定时任务滚动，这时候就会出现一些不可调和的bug.
             }
             let up = event => {
                 let x = event.clientX - startX
                 position = position - Math.round(x / 500)
-
-                for (let offset of [0, Math.sign(Math.round(x / 500) - x + 250 * Math.sign(x))]) {
+                for (let offset of [0, - Math.sign(Math.round(x / 500) - x + 250 * Math.sign(x))]) {
                     let pos = position + offset
-                    // 利用取余运算处理循环的小技巧
-                    pos = (pos + children.length) % children.length
+                    pos = (pos + children.length) % children.length // 利用取余运算处理循环的小技巧
                     children[pos].style.transition = ''
                     children[pos].style.transform = `translateX(${- pos * 500 + offset * 500}px)`
                 }
-
-                // for (let child of children) {
-                //     // 松开恢复transition
-                //     child.style.transition = ''
-                //     child.style.transform = `translateX(${- position * 500 + x}px)`
-                // }
                 document.removeEventListener('mousemove', move)
                 document.removeEventListener('mouseup', up)
             }
@@ -85,7 +65,7 @@ class Carousel extends Component {
         //     let next = children[nextIndex]
 
         //     next.style.transition = 'none' 
-        //     next.style.transform = `translateX(-${100 - nextIndex * 100}%)`
+        //     next.style.transform = `translateX(${100 - nextIndex * 100}%)`
 
         //     setTimeout(() => {
         //         next.style.transition = '' // 置为空style上就失效了，之前在css设置的又生效了
@@ -94,10 +74,6 @@ class Carousel extends Component {
 
         //         currentIndex = nextIndex
         //     }, 16); //16ms正好是浏览器里一帧的时间
-
-        //     // for (let child of children) {
-        //     //     child.style.transform = `translateX(-${current * 100}%)`
-        //     // }
         // }, 3000);
         return this.root
     }
