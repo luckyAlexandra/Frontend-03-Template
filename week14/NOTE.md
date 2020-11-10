@@ -49,3 +49,5 @@ start里会有一个启动tick的过程，我们会选择把tick藏起来，变�
 ```
 this[TICKHANDLER] = requestAnimationFrame(this[TICK])
 ```
+
+javascript一个比较厉害的点是可以pause和resume，css的话pause是可以的，但是resume就不容易了。
