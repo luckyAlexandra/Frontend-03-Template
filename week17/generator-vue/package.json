@@ -1,8 +1,8 @@
 {
-  "name": "generator-toolchain",
+  "name": "generator-vue",
   "version": "1.0.0",
   "description": "",
-  "main": "generator/app/index.js",
+  "main": "generators/app/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
