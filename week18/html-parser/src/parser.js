@@ -1,122 +1,121 @@
 const css = require('css')
-
+// 全局的stack，首先往里push一个document节点，这是因为如果我们写的一个配对良好HTML片段的话，它最后整个的栈应该是空的，不方便我们把这棵树拿出来，所以我们让这个栈有一个初始的跟节点。
+let stack
 // 全局变量currentToken，因为在html里，tag不管有多复杂，它是当作一个token去处理的。随着状态机一个一个读进来字符的时候，逐步地构造token里的内容
 let currentToken = null
-
-// 全局的stack，首先往里push一个document节点，这是因为如果我们写的一个配对良好HTML片段的话，它最后整个的栈应该是空的，不方便我们把这棵树拿出来，所以我们让这个栈有一个初始的跟节点。
-let stack = [{type: 'document', children: []}]
+let currentAttribute = null
 let currentTextNode = null
 
 // 加入一个新的函数，addCSSRules，这里我们把css规则暂存到一个数组里
-let rules = []
-function addCSSRules (text) {
-    var ast = css.parse(text)
-    // console.log(JSON.stringify(ast, null, '     '))
-    rules.push(...ast.stylesheet.rules)
-}
+// let rules = []
+// function addCSSRules (text) {
+//     var ast = css.parse(text)
+//     // console.log(JSON.stringify(ast, null, '     '))
+//     rules.push(...ast.stylesheet.rules)
+// }
 
-function match (element, selector) {
-    if (!selector || !element.attributes) {
-        return false
-    }
+// function match (element, selector) {
+//     if (!selector || !element.attributes) {
+//         return false
+//     }
 
-    if (selector.charAt(0) == '#') {
-        var attr = element.attributes.filter(attr => attr.name == 'id') 
-        if (attr && attr.value == selector.replace('#', '')) {
-            return true
-        }
-    } else if (selector.charAt(0) == '.') {
-        var attr = element.attributes.filter(attr => attr.name == 'class') 
-        if (attr && attr.value == selector.replace('.', '')) {
-            return true
-        }
-    } else {
-        if (element.tagName == selector) {
-            return true
-        }
-    }
-    return false
-}
+//     if (selector.charAt(0) == '#') {
+//         var attr = element.attributes.filter(attr => attr.name == 'id') 
+//         if (attr && attr.value == selector.replace('#', '')) {
+//             return true
+//         }
+//     } else if (selector.charAt(0) == '.') {
+//         var attr = element.attributes.filter(attr => attr.name == 'class') 
+//         if (attr && attr.value == selector.replace('.', '')) {
+//             return true
+//         }
+//     } else {
+//         if (element.tagName == selector) {
+//             return true
+//         }
+//     }
+//     return false
+// }
 
 // 计算specificity
-function specificity (selector) {
-    var p = [0, 0, 0, 0]
-    var selectorParts = selector.split('')
-    for (var part of selectorParts) {
-        if (part.charAt(0) == '#') {
-            p[1] += 1
-        } else if (part.charAt(0) == '.') {
-            p[2] += 1
-        } else {
-            p[3] += 1
-        }
-    }
-    return p
-}
+// function specificity (selector) {
+//     var p = [0, 0, 0, 0]
+//     var selectorParts = selector.split('')
+//     for (var part of selectorParts) {
+//         if (part.charAt(0) == '#') {
+//             p[1] += 1
+//         } else if (part.charAt(0) == '.') {
+//             p[2] += 1
+//         } else {
+//             p[3] += 1
+//         }
+//     }
+//     return p
+// }
 
 // 比较specificity 
-function compare (sp1, sp2) {
-    if (sp1[0] - sp2[0]) {
-        return sp1[0] - sp2[0]
-    }
-    if (sp1[1] - sp2[1]) {
-        return sp1[1] - sp2[1]
-    }
-    if (sp1[2] - sp2[2]) {
-        return sp1[2] - sp2[2]
-    }
-    return sp1[3] - sp2[3]
-}
+// function compare (sp1, sp2) {
+//     if (sp1[0] - sp2[0]) {
+//         return sp1[0] - sp2[0]
+//     }
+//     if (sp1[1] - sp2[1]) {
+//         return sp1[1] - sp2[1]
+//     }
+//     if (sp1[2] - sp2[2]) {
+//         return sp1[2] - sp2[2]
+//     }
+//     return sp1[3] - sp2[3]
+// }
 
 
-function computeCSS (element) {
-    // 这个栈是会不断变化的，随着后续的解析，栈里面的元素会发生变化，就可能会被污染，所以这里用了slice把数组复制一遍
-    // 我们会把父元素的序列进行一次reverse，因为检查一个选择器是否匹配当前元素，我们是一级一级去往它的父元素去找的
-    var elements = stack.slice().reverse()
+// function computeCSS (element) {
+//     // 这个栈是会不断变化的，随着后续的解析，栈里面的元素会发生变化，就可能会被污染，所以这里用了slice把数组复制一遍
+//     // 我们会把父元素的序列进行一次reverse，因为检查一个选择器是否匹配当前元素，我们是一级一级去往它的父元素去找的
+//     var elements = stack.slice().reverse()
 
-    if (!element.computedStyle) {
-        element.computedStyle = {}
-    }
+//     if (!element.computedStyle) {
+//         element.computedStyle = {}
+//     }
 
-    for (let rule of rules) {
-        var selectorParts = rule.selectors[0].split(' ').reverse()
-        if (!match(element, selectorParts[0])) {
-            continue
-        }
+//     for (let rule of rules) {
+//         var selectorParts = rule.selectors[0].split(' ').reverse()
+//         if (!match(element, selectorParts[0])) {
+//             continue
+//         }
 
-        let matched = false
+//         let matched = false
 
-        var j = 1
-        for (var i = 0; i < elements.length; i++) {
-            if (match(elements[i], selectorParts[j])) {
-                j++
-            }
-        }
+//         var j = 1
+//         for (var i = 0; i < elements.length; i++) {
+//             if (match(elements[i], selectorParts[j])) {
+//                 j++
+//             }
+//         }
 
-        if (j >= selectorParts.length) {
-            matched = true
-        }
+//         if (j >= selectorParts.length) {
+//             matched = true
+//         }
 
-        if (matched) {
-            // 如果匹配到，我们要加入
-            var sp = specificity(rule.selectors[0])
-            var computedStyle = element.computedStyle
-            for (var declaration of rule.declarations) {
-                if (!computedStyle[declaration.property]) {
-                    computedStyle[declaration.property] = {}
-                }
-                if (!computedStyle[declaration.property].specificity) {
-                    computedStyle[declaration.property].value = declaration.value
-                    computedStyle[declaration.property].specificity = sp
-                } else if (compare(computedStyle[declaration.property].specificity, sp) < 0) {// 如果新的优先级更高, 则覆盖
-                    computedStyle[declaration.property].value = declaration.value
-                    computedStyle[declaration.property].specificity = sp
-                }
-            }
-            console.log(element.computedStyle)
-        }
-    }
-}
+//         if (matched) {
+//             // 如果匹配到，我们要加入
+//             var sp = specificity(rule.selectors[0])
+//             var computedStyle = element.computedStyle
+//             for (var declaration of rule.declarations) {
+//                 if (!computedStyle[declaration.property]) {
+//                     computedStyle[declaration.property] = {}
+//                 }
+//                 if (!computedStyle[declaration.property].specificity) {
+//                     computedStyle[declaration.property].value = declaration.value
+//                     computedStyle[declaration.property].specificity = sp
+//                 } else if (compare(computedStyle[declaration.property].specificity, sp) < 0) {// 如果新的优先级更高, 则覆盖
+//                     computedStyle[declaration.property].value = declaration.value
+//                     computedStyle[declaration.property].specificity = sp
+//                 }
+//             }
+//             console.log(element.computedStyle)
+//         }
+//     }
+// }
 
 // 状态机里面所有的状态创建完token以后，要在同一个出口给它输出，所以写一个全局的emit(token)
 // emit(token)会接收到我们从状态机里产出的所有token，还有开始标签，结束标签，自封闭标签
@@ -143,9 +142,8 @@ function emit (token) {
             }
         }
 
-        computeCSS(element)
-        console.log('element---->', element)
-
+        // computeCSS(element)
+        
         // 与栈顶元素建立父子关系
         top.children.push(element)
         element.parent = top
@@ -159,10 +157,6 @@ function emit (token) {
         if (top.tagName != token.tagName) {
             throw new Error('Tag start end doesn\'t match')
         } else {
-            // ++++++++++遇到style标签，执行添加css规则的操作++++++++++++//
-            if (top.tagName === 'style') {
-                addCSSRules(top.children[0].content)
-            }
             stack.pop()
         }
         currentTextNode = null
@@ -181,7 +175,7 @@ function emit (token) {
 const EOF = Symbol('EOF')
 
 function data (c) {
-    if (c === '<') {
+    if (c == '<') {
         return tagOpen
     } else if (c == EOF) {
         emit({
@@ -200,7 +194,7 @@ function data (c) {
 
 // 是标签开始，不是开始标签，这时候我们还不知道是三种标签中的哪一种
 function tagOpen (c) {
-    if (c === '/') {// 结束标签的开头
+    if (c == '/') {// 结束标签的开头
         return endTagOpen 
     } else if (c.match(/^[a-zA-Z]$/)) {// 要么是开始标签，要么是自封闭标签
         // 给currentToken赋一个初值
@@ -210,7 +204,11 @@ function tagOpen (c) {
         }
         return tagName(c)
     } else {
-        return
+        emit({
+            type: 'text',
+            content: c
+        })
+        return data
     }
 }
 
@@ -237,13 +235,14 @@ function tagName (c) {
         return beforeAttributeName
     } else if (c == '/') { // 标签结束
         return selfClosingStartTag
-    } else if (c.match(/^[a-zA-Z]$/)) {// 还是在tagName里
+    } else if (c.match(/^[A-Z]$/)) {// 还是在tagName里
         currentToken.tagName += c // 追加tagName
         return tagName 
     } else if (c == '>') {// 普通的开始标签
         emit(currentToken)
         return data
     } else {
+        currentToken.tagName += c
         return tagName
     }
 }
@@ -321,7 +320,7 @@ function singleQuotedAttributeValue (c) {
 
     } else {
         currentAttribute.value += c
-        return doubleQuotedAttributeValue
+        return singleQuotedAttributeValue
     }
 }
 
@@ -337,8 +336,7 @@ function afterQuotedAttributeValue (c) {
     } else if (c == EOF) {
 
     } else {
-        currentAttribute.value += c
-        return doubleQuotedAttributeValue
+        throw new Error('unexpected charater' + c)
     }
 }
 
@@ -381,7 +379,7 @@ function selfClosingStartTag (c) {
 
 function afterAttributeName (c) {
     if (c.match(/^[\t\n\f ]$/)) {
-        return afterQuotedAttributeValue
+        return afterAttributeName
     } else if (c == '/') {
         return selfClosingStartTag
     } else if (c == '=') {
@@ -402,7 +400,12 @@ function afterAttributeName (c) {
     }
 }
 
-module.exports.parseHTML = function parseHTML (html) {
+export function parseHTML (html) {
+    stack = [{type: 'document', children: []}]
+    currentToken = null
+    currentAttribute = null
+    currentTextNode = null
+
     // state跟我们之前的状态机的代码是一样的
     // 首先给它一个初始状态，因为HTML标准里把初始状态叫做data，我们也叫data就可以了
     let state = data
@@ -413,6 +416,6 @@ module.exports.parseHTML = function parseHTML (html) {
     // 所以我们最后必须要额外给它一个字符，而这个字符不能是任何一个有效的字符，所以这里我们创建了一个Symbol
     // 这个Sym本身是没有任何Symbol的意义的，我们只是利用了Symbol的唯一性，创建了一个新的符号EOF，把它作为状态机的最后一个输入。
     state = state(EOF)
-    console.log(stack[0])
+    return stack[0]
     // console.log(html)
 }
