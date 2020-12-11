@@ -52,3 +52,119 @@ scp -P 8022 -r ./* alexandra@127.0.0.1:/home/alexandra/server
 ![avatar](img/port2.png)
 
 服务器这里会报一个错误Error: No default engine was specified and no extension was provided，不用管他，不影响线上服务起。这样我们就有了一个纯粹的静态服务器，它是一个比较稳定的线上的服务，这就是我们现在的一个publish server了。我们的线上服务系统，就是我们再写一个应用叫publish server，来给线上的server提供文件上去就可以了。
+
+## 3. 用node启动一个简单的server
+有了线上服务，接下来考虑如何去实现发布服务。我们发布服务，它是由一个`发布的服务器端`和一个`发布的工具`，它是由一对这样的项目来构成的。
+首先创建两个新的项目，publish-server和publish-tool。publish-server负责向真实的server去copy自己的文件，向publish-server去发送我们想要发布的文件。分别npm init两个目录。这里publishe-server其实我们也可以用一个express或者koa这类比较流行的外部框架，这里由于没有多少界面上的工作，所以就用最纯粹的http API做了。
+```
+let http = require('http')
+
+http.createServer(function (req, res) {
+    console.log(req)
+    res.end('hello world')
+}).listen(8082)
+```
+## 4. 编写简单的发送请求功能
+request是流式数据数据的写入，要给request一个end，这时候请求才真正地出去。response也是一个流式的返回。不管是客户端的request和response，还是服务器的request和response，它都是流式处理的，可能会觉得它很麻烦，但实际上我们接下来要做的正式利用流式的特性，因为我们要发布上传的东西，它可能体积未必是一个很小的东西，这时候流式处理能够帮助我们，让我们的计算机的效率达成最高。
+```
+let http = require('http')
+
+let request = http.request({
+    hostname: '127.0.0.1',
+    port: 8082
+}, response => {
+    console.log(response)
+})
+
+request.end()
+```
+这时候一个基础代码就有了，接下来我们来添加真正的逻辑，学习一下如何通过客户端，通过请求的body，然后来传输一个文件，给到我们的服务端。
+
+## 5.简单了解Node.js的流
+发布系统需要把文件通过http传给我们发布的服务器，publish-tool到publish-server的传输，就是一个典型的流式传输。所以这里要稍微讲一下Node.js的基础知识，就是Node.js的流。因为不管是我们把文件读出来，还是最后我们走网络的request和response，以及我们最后到服务端，从服务端的request里去读数据，然后写到服务端的文件系统里面，整个的这个过程，都是需要了解流式传输的。
+Node里的流分成两个部分，第一种是可读的流，也就是说我们用Nodejs的代码，从流里面可以获取数据，因为一个流一个stream，它肯定是一个对象，这个对象我们主要用的是他的两个事件，close和data。当我们得到一个流，比如说一个文件流，我们从这个文件里是逐步读取数据出来的，这个过程中，根据我们正常对stream的定义，我们是不太关心它每次读出来多少的，这个时候我们就要监听它的data event，这样data event可能被一次或者数次调用，来获取文件中的内容。这个对小文件来说没有意义，小文件可能一次读出来变成一个字符串。在Nodejs里面，对与大型文件，尤其是我们的音视频，图片之类的binary型的文件，我们最好是用这种方式去处理。data event是我们最常用的一个readable的stream里的一个事件。还有一个就是close event，我们总要知道这个流什么时候读完了。大部分可读的流我们就处理这两个部分，一个部分叫做event 的data，一个部分叫做event的close。
+以读取package.json为例，在publish.js里监听data和end事件：
+```
+// 引入文件系统的包
+let fs = require('fs')
+
+let file = fs.createReadStream('./package.json')
+
+file.on('data', chunk => {
+    console.log(chunk.toString())
+})
+
+file.on('end', chunk => {
+    console.log('read finished')
+})
+```
+接下来看一下WriteStream。有的流是只能读，有的流是只能写，比如client端的request流，就是一个只能写的流，读不出来东西。如果一个文件可以一边读一边写，它就是一个既是readable又是writable的stream。writable的流最主要的方法就是write，还有一个end方法，对应流的结束，表示已经写完了，这个流就截止了。write不是一个同步的API，它其实是由callback的，但是我们是可以连续调用的，如果调用的时候，流本身前面的还没有写完的话，它就会排队去处理这个事情，用英文讲叫buffered。buffered就是已经给它缓存起来了。然后它会比较推荐不要不停地往流里面写东西，否则会出问题，而这个write，它会返回一个true或者false，如果是true的话可以往里写，如果是false的话，这次的write仍然是有效的，但是这个write被缓存起来了，这种时候有个事件叫drain，表示我已经把你调用write给我的数据写完了。所以说stream是个有点复杂的东西，尤其是writable stream，readable还比较简单。
+这里面有一个重要的概念，就是request这个东西，它其实就是一个stream，所以为什么http的API设计成这样，就是因为它的request是一个流式处理的API，这样的话我们前面给的head的内容，是同步去处理的，但是后面的body，是以流的方式去发送的，这样就让http有了这种携带比较大型的数据的能力。我们现在习惯的都是秒级的http请求，但是对于我们的一些工具型的这种传输来说，一个request可以多传一会，传一两分钟都没什么问题。
+接下来看一下怎么读取文件并把它发送到服务端。
+我们要发送流式的内容，就必须把它做成post请求了，加上 method: 'POST', 和headers，headers里有个必写的内容，Content-Type，这里写成application/octet-stream，这个一个比较常见的流式传输的内容类型。http的content-type还是一个挺复杂的机制，如果想要深入了解的话，还是去看http的RFC标准。
+
+修改publish.js和server.js
+```
+let http = require('http')
+
+// 引入文件系统的包
+let fs = require('fs')
+
+let request = http.request({
+    hostname: '127.0.0.1',
+    port: 8082,
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/octet-stream'
+    }
+}, response => {
+    console.log(response)
+})
+
+
+let file = fs.createReadStream('./package.json')
+
+file.on('data', chunk => {
+    console.log(chunk.toString())
+    request.write(chunk)
+})
+
+file.on('end', chunk => {
+    console.log('read finished')
+    request.end(chunk)
+})
+```
+
+```
+let http = require('http')
+
+http.createServer(function (request, response) {
+    console.log(request.headers)
+    request.on('data', chunk => {
+        console.log(chunk.toString())
+    })
+    request.on('end', chunk => {
+        response.end('success')
+    })
+    // res.end('hello world')
+}).listen(8082)
+```
+分别用debugger启动两个文件，收到了客户端的package.json的信息。我们以package.json为例，学习了流式传输，这样我们就打通了client和server端的障碍，可以传输文件了。接下来，我们把从客户端接收来的文件，通过服务端，正式地写到server里面去。
+
+6. ## 杀掉某个node进程
+
+一、查看指定端口的进程
+sudo lsof -i :27017
+
+COMMAND   PID    USER        FD      TYPE             DEVICE             SIZE/OFF      NODE       NAME
+[mongod]  859   zhangsan    313u      IPv6            0x1111111111111     0t0         TCP        *:cslistener (LISTEN)
+
+二、根据进程名称
+ps -ef | grep nginx
+
+  501 17780     1   0  8:36下午 ??         0:00.00 nginx: master process nginx
+  501 17781 17780   0  8:36下午 ??         0:00.00 nginx: worker process
+  501 17790 14611   0  8:39下午 ttys004    0:00.00 grep nginx
+
+然后根据PID杀进程：
+sudo kill -9 859
