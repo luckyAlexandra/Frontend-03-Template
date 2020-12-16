@@ -151,7 +151,7 @@ http.createServer(function (request, response) {
 ```
 分别用debugger启动两个文件，收到了客户端的package.json的信息。我们以package.json为例，学习了流式传输，这样我们就打通了client和server端的障碍，可以传输文件了。接下来，我们把从客户端接收来的文件，通过服务端，正式地写到server里面去。
 
-6. ## 杀掉某个node进程
+## 6. 杀掉某个node进程
 
 一、查看指定端口的进程
 sudo lsof -i :27017
@@ -168,3 +168,62 @@ ps -ef | grep nginx
 
 然后根据PID杀进程：
 sudo kill -9 859
+
+## 7. 改造server
+
+修改publish-server的server.js
+```
+let http = require('http')
+
+let fs = require('fs')
+
+http.createServer(function (request, response) {
+    console.log(request.headers)
+
+    let outFile = fs.createWriteStream('../server/public/index.html')
+
+    request.on('data', chunk => {
+        // console.log(chunk.toString())
+        outFile.write(chunk)
+    })
+    request.on('end', () => {
+        outFile.end()
+        response.end('success')
+    })
+    // res.end('hello world')
+}).listen(8082)
+```
+
+回到客户端publish-tool，在publish-tool里新增sample.html，加一些简单的内容，然后把sample.html上传到服务端去。
+```
+<html>
+    <head>
+        <title>hello world！</title> 
+    </head>
+    <body>
+        <h1>hellow world!</h1>
+    </body>
+</html>
+```
+server.js的文件改成sample.html。
+```
+let file = fs.createReadStream('./sample.html')
+```
+看server里public的index是否已经变成新的内容，并把服务启动起来，然后看3000端口是否变成了新的文件。然后再次修改public-tool里的sample.html，保存重启，这时候再刷新3000端口，也发生了变化。
+这就是从发布工具，到发布系统，到线上系统的一个最简单的链路。
+log里输出的内容变成了sample.html，再通过localhost://8080检验一下是否已经变成新的内容。
+
+
+
+接下来把发布系统也做一个简单的部署。因为部署的工作总要做，所以把它写到npm的command里，
+```
+npm start&
+```
+加一个&，就不会阻塞console了。
+
+
+## 8. 实现多文件发布
+通常在供应链里发布的环节，都不是发布一个文件，如果要发布多个文件，就需要用到node里面一些压缩相关的包。
+Archiver包，压缩用的，
+unzipper包，也差不多，只不过它是一个输出流。
+pipe能够把一个可读的流，导入到一个可写的流里。

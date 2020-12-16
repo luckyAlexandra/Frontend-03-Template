@@ -6,6 +6,7 @@ let fs = require('fs')
 let request = http.request({
     hostname: '127.0.0.1',
     port: 8082,
+    // port: 8882,
     method: 'POST',
     headers: {
         'Content-Type': 'application/octet-stream'
@@ -15,7 +16,7 @@ let request = http.request({
 })
 
 
-let file = fs.createReadStream('./package.json')
+let file = fs.createReadStream('./sample.html')
 
 file.on('data', chunk => {
     console.log(chunk.toString())
