@@ -3,7 +3,7 @@ import {Component, createElement}from './framework'
 class Carousel extends Component {
     constructor () {
         super()
-        // 将attributes存起来
+        // carousel的src并不是给root用的，我们要把attributes存起来
         this.attributes = Object.create(null)
     }
     // 将setAttribute重写
@@ -64,6 +64,7 @@ class Carousel extends Component {
         //     let current = children[currentIndex]
         //     let next = children[nextIndex]
 
+        //     // 暂停动画，将next放到current的后面，为切换做准备
         //     next.style.transition = 'none' 
         //     next.style.transform = `translateX(${100 - nextIndex * 100}%)`
 
@@ -78,6 +79,8 @@ class Carousel extends Component {
         return this.root
     }
     mountTo (parent) {
+        // 不能在super里调用render，我们让render的时机往后一点，在mountTo里调用render
+        // 这样就能保证render时是在取到src的数据之后
         parent.appendChild(this.render())
     }
 }

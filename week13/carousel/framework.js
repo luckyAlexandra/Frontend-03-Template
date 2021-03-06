@@ -44,7 +44,7 @@ export class Component {
 // ElementWraper把一个普通div也转换成带有mountTo方法的div
 class ElementWraper extends Component {
     constructor (type) {
-        this.root = document.createElement('div')
+        this.root = document.createElement(type)
     }
 
 }
